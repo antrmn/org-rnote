@@ -2,7 +2,7 @@
 
 ;; Author: Antonio Romano <n58r@pm.me>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "29.1") (org "9.7"))
+;; Package-Requires: ((emacs "29.1") (org "9.8-pre"))
 ;; Keywords: productivity, org, drawing
 ;; URL: https://github.com/antrmn/org-rnote
 
