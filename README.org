@@ -1,13 +1,13 @@
 #+TITLE: org-rnote
 
-**!! This package relies on a not-yet released version of Org mode to work.**
+*!! This package relies on a [[https://abode.karthinks.com/org-latex-preview/][not-yet released version of Org mode]] to work.*
 
-This Emacs package integrates Org mode with the great Rnote sketching software, allowing for inline previews of .rnote files directly within your Org mode buffers.
+This Emacs package integrates Org mode with the great [[https://github.com/flxzt/rnote][Rnote]] sketching software, allowing for inline previews of .rnote files directly within your Org mode buffers.
 
-It extends org-latex-preview-file functionality to work with both =attachment:= and =file:= links. Preview generation runs asynchronously in the background and utilizes caching to instantly display unchanged files on subsequent requests.
+It extends =org-latex-preview-file= functionality to work with both =attachment:= and =file:= links. Preview generation runs asynchronously in the background and utilizes caching to instantly display unchanged files on subsequent requests.
 * Warning
 
-**!! This package relies on a not-yet released version of Org mode to work.**
+*!! This package relies on a [[https://abode.karthinks.com/org-latex-preview/][not-yet released version of Org mode]] to work.**
 
 This package is untested and in its early development stage. Please use at your own risk. Contributions are well accepted.
 * Installation and usage
