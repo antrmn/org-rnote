@@ -1,0 +1,33 @@
+#+TITLE: org-rnote
+
+**!! This package relies on a not-yet released version of Org mode to work.**
+
+This Emacs package integrates Org mode with the great Rnote sketching software, allowing for inline previews of .rnote files directly within your Org mode buffers.
+
+It extends org-latex-preview-file functionality to work with both =attachment:= and =file:= links. Preview generation runs asynchronously in the background and utilizes caching to instantly display unchanged files on subsequent requests.
+* Warning
+
+**!! This package relies on a not-yet released version of Org mode to work.**
+
+This package is untested and in its early development stage. Please use at your own risk. Contributions are well accepted.
+* Installation and usage
+Just copy [[file:org-rnote.el][org-rnote.el]] in your =load-path= then enable the  global minor mode:
+
+#+begin_src
+  M-x org-rnote-preview-mode
+#+end_src
+
+To preview =.rnote= files, simply use the standard Org link preview functionality. Invoke the =org-display-inline-images= command (bound to =C-c C-x C-v= by default) to toggle the display of all inline images, including your =.rnote= files.
+
+* Recommended Settings
+The following settings are not directly part of org-rnote, but can enhance your experience when working with inline Rnote previews:
+
+#+begin_src emacs-lisp
+  ;; Configure Org mode to open .rnote files with the Rnote application
+  ;; (Linux only)
+  (add-to-list 'org-file-apps '("\\.rnote\\'" . "xdg-open %s"))
+
+  ;; Make images clickable
+  (bind-keys :map image-map
+           ("<mouse-1>" . org-open-at-point))
+#+end_src
