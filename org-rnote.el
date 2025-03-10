@@ -117,22 +117,28 @@ OLD-FUN is the original function being advised.
 OV is the overlay where the preview is displayed.
 PATH is the file path of the link.
 LINK is the Org link object."
-  (when (display-graphic-p)
-    (if (string-match-p rnote-file-regexp (expand-file-name (substitute-in-file-name path)))
-        (org-rnote--get-cached-or-export path (lambda (cache-path)
-                                                (funcall old-fun ov cache-path link)))
-      (funcall old-fun ov path link))))
+  (if (and org-rnote-preview-mode
+           (display-graphic-p)
+           (string-match-p rnote-file-regexp (expand-file-name
+                                              (substitute-in-file-name path))))
+      (org-rnote--get-cached-or-export path (lambda (cache-patch)
+                                              (funcall old-fun ov cache-patch link)))
+    (funcall old-fun ov path link)))
+
 
 ;;;###autoload
 (define-minor-mode org-rnote-preview-mode
-  "Global minor mode to enable Rnote previews in Org link previews.
-When enabled, this mode advises `org-link-preview-file` to handle Rnote files
+  "Minor mode to enable Rnote previews in Org link previews.
+When enabled, this mode patches `org-link-preview-file` to handle Rnote files
 specially."
-  :global t
   :lighter nil
-  (if org-rnote-preview-mode
-      (advice-add 'org-link-preview-file :around #'org-rnote--preview-org-link)
-    (advice-remove 'org-link-preview-file #'org-rnote--preview-org-link)))
+  (if (derived-mode-p 'org-mode)
+      (setq org-rnote-preview-mode t)  ;; Enable the mode
+    (setq org-rnote-preview-mode nil)  ;; Disable the mode
+    (message "This minor mode can only be enabled in org-mode or its derivatives.")))
+(when (advice-member-p #'org-rnote--preview-org-link 'org-link-preview-file)
+  (advice-remove 'org-link-preview-file #'org-rnote--preview-org-link))
+(advice-add 'org-link-preview-file :around #'org-rnote--preview-org-link)
 
 (provide 'org-rnote)
 ;;; org-rnote.el ends here
