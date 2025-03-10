@@ -107,6 +107,16 @@ The export occurs asynchronously"
                                                               write-cache-fun)
                                     #'delete-file)))))
 
+;;;###autoload
+(define-minor-mode org-rnote-preview-mode
+  "Minor mode to enable Rnote previews in Org link previews.
+When enabled, this mode patches `org-link-preview-file` to handle Rnote files
+specially."
+  :lighter nil
+  (if (derived-mode-p 'org-mode)
+      (setq org-rnote-preview-mode t)  ;; Enable the mode
+    (setq org-rnote-preview-mode nil)  ;; Disable the mode
+    (message "This minor mode can only be enabled in org-mode or its derivatives.")))
 (defun org-rnote--preview-org-link (old-fun ov path link)
   "Advice for `org-link-preview-file' to handle Rnote files specially.
 
@@ -126,16 +136,6 @@ LINK is the Org link object."
     (funcall old-fun ov path link)))
 
 
-;;;###autoload
-(define-minor-mode org-rnote-preview-mode
-  "Minor mode to enable Rnote previews in Org link previews.
-When enabled, this mode patches `org-link-preview-file` to handle Rnote files
-specially."
-  :lighter nil
-  (if (derived-mode-p 'org-mode)
-      (setq org-rnote-preview-mode t)  ;; Enable the mode
-    (setq org-rnote-preview-mode nil)  ;; Disable the mode
-    (message "This minor mode can only be enabled in org-mode or its derivatives.")))
 (when (advice-member-p #'org-rnote--preview-org-link 'org-link-preview-file)
   (advice-remove 'org-link-preview-file #'org-rnote--preview-org-link))
 (advice-add 'org-link-preview-file :around #'org-rnote--preview-org-link)
