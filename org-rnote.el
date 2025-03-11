@@ -39,7 +39,8 @@ path on success or nil on failure."
          (expanded-dest (expand-file-name (substitute-in-file-name dest))))
     (org-async-call
      (list "rnote-cli" "export" "selection"
-           "--output-file" expanded-dest "--no-background"
+           "--output-file" expanded-dest "--no-pattern"
+           "--jpeg-quality" "50" "--bitmap-scalefactor" "0.8"
            "all"  expanded-source)
      :buffer "*Rnote export output*"
      :failure (lambda (_ __ ___)
