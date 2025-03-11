@@ -117,6 +117,7 @@ specially."
       (setq org-rnote-preview-mode t)  ;; Enable the mode
     (setq org-rnote-preview-mode nil)  ;; Disable the mode
     (message "This minor mode can only be enabled in org-mode or its derivatives.")))
+
 (defun org-rnote--preview-org-link (old-fun ov path link)
   "Advice for `org-link-preview-file' to handle Rnote files specially.
 
@@ -134,7 +135,6 @@ LINK is the Org link object."
       (org-rnote--get-cached-or-export path (lambda (cache-patch)
                                               (funcall old-fun ov cache-patch link)))
     (funcall old-fun ov path link)))
-
 
 (when (advice-member-p #'org-rnote--preview-org-link 'org-link-preview-file)
   (advice-remove 'org-link-preview-file #'org-rnote--preview-org-link))
