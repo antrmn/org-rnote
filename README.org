@@ -29,5 +29,6 @@ The following settings are not directly part of org-rnote, but can enhance your 
 
   ;; Make images clickable
   (bind-keys :map image-map
+             :filter (derived-mode-p 'org-mode)
            ("<mouse-1>" . org-open-at-point))
 #+end_src
