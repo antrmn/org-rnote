@@ -14,6 +14,7 @@
 (require 'org-macs)
 (require 'org-persist)
 (require 'ol)
+(require 'filenotify)
 
 (defconst rnote-file-regexp "\\.rnote$"
   "Regular expression matching Rnote files.")
@@ -22,6 +23,8 @@
   "Customization for `org-rnote'."
   :group 'org
   :prefix "org-rnote-")
+
+;;; Export related functions
 
 (defconst org-rnote--container-header
   '((elisp-data "org-rnote") (version "0.1"))
@@ -107,6 +110,47 @@ The export occurs asynchronously"
                                                               write-cache-fun)
                                     #'delete-file)))))
 
+;;; File watch related functions
+
+(defun org-rnote--remove-overlay-watch (ov after &rest _)
+"Remove the file watch associated with overlay OV if it is set.
+This function is intended to be used as an overlay post-modification hook.
+AFTER must be non-nil to indicate that the modification has occurred."
+  (when (and ov after)
+    (when-let* ((watch (overlay-get ov 'watch-descriptor)))
+               (file-notify-rm-watch watch))))
+
+(defun org-rnote--add-file-watch (file ov)
+ "Add a file watch for FILE and associate it with overlay OV.
+This function sets up a file watch on FILE for `change` and
+`attribute-change` events.  When the file is modified, the overlay
+region is updated."
+ (let* ((refresh-fun (lambda (_)
+                       (message "Trying add-file-watch")
+                       (when (overlay-buffer ov)
+                         (message "Overlay exists")
+                         (org-link-preview-region t
+                                                  t
+                                                  (overlay-start ov)
+                                                  (overlay-end ov)))))
+        (watch (file-notify-add-watch file '(change attribute-change) refresh-fun)))
+   (overlay-put ov 'watch-descriptor watch)
+   (overlay-put ov 'modification-hooks
+                (append (overlay-get ov 'modification-hooks)
+                        (list #'org-rnote--remove-overlay-watch)))))
+
+(defun org-rnote--remove-watches (overlays)
+  "Remove file watches from OVERLAYS that have a `watch-descriptor` property."
+  (dolist (ov overlays)
+    (when-let* ((watch-descriptor (overlay-get ov 'watch-descriptor)))
+      (file-notify-rm-watch watch-descriptor))))
+
+(defun org-rnote--remove-all-watches ()
+  "Remove all file watches associated with link preview overlays."
+  (org-rnote--remove-watches org-link-preview-overlays))
+
+;;; Minor mode definition
+
 ;;;###autoload
 (define-minor-mode org-rnote-preview-mode
   "Minor mode to enable Rnote previews in Org link previews.
@@ -114,9 +158,16 @@ When enabled, this mode patches `org-link-preview-file` to handle Rnote files
 specially."
   :lighter nil
   (if (derived-mode-p 'org-mode)
-      (setq org-rnote-preview-mode t)  ;; Enable the mode
-    (setq org-rnote-preview-mode nil)  ;; Disable the mode
-    (message "This minor mode can only be enabled in org-mode or its derivatives.")))
+      (progn
+        (if org-rnote-preview-mode
+            (add-hook 'kill-buffer-hook #'org-rnote--remove-all-watches nil t)
+          (remove-hook 'kill-buffer-hook #'org-rnote--remove-all-watches t)
+          (org-rnote--remove-all-watches)))
+    (when org-rnote-preview-mode
+      (message "This minor mode can only be enabled in org-mode or its derivatives."))))
+
+;;; Advice functions
+
 (defun org-rnote--preview-org-link (old-fun ov path link)
   "Advice for `org-link-preview-file' to handle Rnote files specially.
 
@@ -132,13 +183,32 @@ LINK is the Org link object."
            (string-match-p rnote-file-regexp (expand-file-name
                                               (substitute-in-file-name path))))
       (org-rnote--get-cached-or-export path (lambda (cache-patch)
-                                              (funcall old-fun ov cache-patch link)))
+                                              (when (funcall old-fun ov cache-patch link)
+                                                (org-rnote--add-file-watch path ov))))
     (funcall old-fun ov path link)))
-
 
 (when (advice-member-p #'org-rnote--preview-org-link 'org-link-preview-file)
   (advice-remove 'org-link-preview-file #'org-rnote--preview-org-link))
 (advice-add 'org-link-preview-file :around #'org-rnote--preview-org-link)
+
+(defun org-rnote--link-preview-clear-with-watch (orig-fun &rest args)
+  "Advice for `org-link-preview-clear' to remove file watches when clearing.
+
+This function is intended to be used as an :around advice for
+`org-link-preview-clear'.  It ensures that when link previews are
+cleared, any associated file watches are also removed.
+
+ORIG-FUN is the original function being advised.  ARGS are its argument."
+  (if org-rnote-preview-mode
+      (let ((before org-link-preview-overlays))
+        (apply orig-fun args)
+        (let ((after org-link-preview-overlays))
+          (org-rnote--remove-watches (seq-difference before after))
+         (apply orig-fun args)))))
+
+(when (advice-member-p #'org-rnote--link-preview-clear-with-watch 'org-link-preview-clear)
+  (advice-remove 'org-link-preview-clear #'org-rnote--link-preview-clear-with-watch))
+(advice-add 'org-link-preview-clear :around #'org-rnote--link-preview-clear-with-watch)
 
 (provide 'org-rnote)
 ;;; org-rnote.el ends here
