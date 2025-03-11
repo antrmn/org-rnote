@@ -11,7 +11,7 @@ It extends =org-latex-preview-file= functionality to work with both =attachment:
 
 This package is untested and in its early development stage. Please use at your own risk. Contributions are well accepted.
 * Installation and usage
-Just copy [[file:org-rnote.el][org-rnote.el]] in your =load-path= then enable the  global minor mode:
+Just copy [[file:org-rnote.el][org-rnote.el]] in your =load-path=, load it and then enable the local minor mode in an .org buffer:
 
 #+begin_src
   M-x org-rnote-preview-mode
